@@ -1,6 +1,9 @@
 const std = @import("std");
 const encryptor = @import("packer/encryptor.zig");
 const packer = @import("packer/packer.zig");
+const build_options = @import("build_options");
+
+const version = build_options.version_string;
 
 pub fn main() !void {
     const allocator = std.heap.page_allocator;
@@ -63,8 +66,8 @@ pub fn main() !void {
     defer if (output_file == null) allocator.free(output_filename);
 
     if (verbose) {
-        try stdout.print("                       Zyra Packer v1.0\n", .{});
-        try stdout.print("        Copyright (C) 2025 CX330Blake. All rights reserved.\n\n", .{});
+        try stdout.print("                       Zyra Packer v{s}\n", .{version});
+        try stdout.print("        Copyright (C) 2025 @CX330Blake. All rights reserved.\n\n", .{});
     }
 
     // Pack the file
@@ -136,7 +139,7 @@ fn packFile(allocator: std.mem.Allocator, input_path: []const u8, output_path: [
 fn printUsage(program_name: []const u8) !void {
     const stdout = std.io.getStdOut().writer();
     try stdout.print(
-        \\Zyra Packer v1.0 - Binary packer and obfuscator
+        \\Zyra Packer v{s} - Binary packer and obfuscator
         \\
         \\Usage: {s} [options] file
         \\
@@ -151,5 +154,5 @@ fn printUsage(program_name: []const u8) !void {
         \\  {s} -o myapp.exe program       # Pack program -> myapp.exe
         \\  {s} -k FF -v /usr/bin/cat      # Pack with key 0xFF, verbose
         \\
-    , .{ program_name, program_name, program_name, program_name });
+    , .{ version, program_name, program_name, program_name, program_name });
 }
