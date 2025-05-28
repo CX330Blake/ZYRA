@@ -3,6 +3,9 @@ const std = @import("std");
 pub fn main() !void {
     const allocator = std.heap.page_allocator;
 
+    // TODO: add more architecture like PE and Mach-O
+    const stub_filename = "elf_stub";
+
     // Build the stub
     var build_process = std.process.Child.init(&[_][]const u8{ "zig", "build-exe", "src/packer/elf_stub.zig", "-O", "ReleaseFast", "-target", "x86_64-linux", "-fstrip", "--name", "temp_stub" }, allocator);
 
@@ -10,16 +13,18 @@ pub fn main() !void {
     const result = try build_process.wait();
 
     if (result != .Exited or result.Exited != 0) {
-        std.debug.print("Failed to build stub\n", .{}); // Added .{}
+        std.debug.print("Failed to build stub\n", .{});
         return;
     }
 
-    // Read the built binary
-    const stub_data = try std.fs.cwd().readFileAlloc(allocator, "temp_stub", 10 * 1024 * 1024);
+    // Read the built binary (maximum size 100MB)
+    // TODO: Get the file size before memory allocation
+    const stub_data = try std.fs.cwd().readFileAlloc(allocator, "temp_stub", 100 * 1024 * 1024);
     defer allocator.free(stub_data);
 
     // Generate Zig source code with embedded binary
-    const output_file = try std.fs.cwd().createFile("src/embedded_stub.zig", .{});
+    const output_file_name = try std.fmt.allocPrint(allocator, "src/embedded_{s}.zig", .{stub_filename});
+    const output_file = try std.fs.cwd().createFile(output_file_name, .{});
     defer output_file.close();
 
     try output_file.writeAll("// Auto-generated embedded stub binary\n");
@@ -38,6 +43,6 @@ pub fn main() !void {
     // Clean up
     std.fs.cwd().deleteFile("temp_stub") catch {};
 
-    std.debug.print("✅ Embedded stub generated: src/embedded_stub.zig\n", .{});
+    std.debug.print("✅ Embedded stub generated: src/embedded_{s}.zig\n", .{stub_filename});
     std.debug.print("📦 Stub size: {} bytes\n", .{stub_data.len});
 }

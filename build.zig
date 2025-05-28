@@ -14,6 +14,11 @@ pub fn build(b: *std.Build) void {
     options.addOption(u32, "version_minor", version.minor);
     options.addOption(u32, "version_patch", version.patch);
 
+    // Build the stubs first
+    const gen_stub = b.addSystemCommand(&[_][]const u8{
+        "zig", "run", "generate_embedded_stub.zig",
+    });
+
     const exe = b.addExecutable(.{
         .name = "zyra",
         .root_source_file = b.path("src/main.zig"),
@@ -23,6 +28,8 @@ pub fn build(b: *std.Build) void {
     });
 
     exe.root_module.addOptions("build_options", options);
+
+    exe.step.dependOn(&gen_stub.step);
 
     b.installArtifact(exe);
 

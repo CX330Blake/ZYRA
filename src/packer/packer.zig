@@ -1,7 +1,8 @@
 const std = @import("std");
-const embedded_stub = @import("../embedded_stub.zig");
+// TODO: support more architecture like PE and Mach-O
+const embedded_stub = @import("../embedded_elf_stub.zig");
 
-pub fn pack_elf_stub(allocator: std.mem.Allocator, encrypted_payload: []const u8, key: u8) ![]u8 {
+pub fn packElfStub(allocator: std.mem.Allocator, encrypted_payload: []const u8, key: u8) ![]u8 {
     const stub_binary = &embedded_stub.ELF_STUB_BINARY;
 
     // Simply append our data to the end of the stub binary

@@ -11,7 +11,7 @@ pub fn main() !void {
     const args = try std.process.argsAlloc(allocator);
     defer std.process.argsFree(allocator, args);
 
-    // Parse command line like UPX
+    // Needs an input file
     if (args.len < 2) {
         try printUsage(args[0]);
         return;
@@ -19,8 +19,8 @@ pub fn main() !void {
 
     var target_file: ?[]const u8 = null;
     var output_file: ?[]const u8 = null;
-    var key: u8 = 0x51; // Default key
-    var verbose = false;
+    var key: u8 = 0x42; // Default key
+    var verbose = false; // Default verbose mode off
 
     var i: usize = 1;
     while (i < args.len) : (i += 1) {
@@ -29,6 +29,8 @@ pub fn main() !void {
         if (std.mem.eql(u8, arg, "-h") or std.mem.eql(u8, arg, "--help")) {
             try printUsage(args[0]);
             return;
+        } else if (std.mem.eql(u8, arg, "--verbose")) {
+            try printVersion();
         } else if (std.mem.eql(u8, arg, "-v") or std.mem.eql(u8, arg, "--verbose")) {
             verbose = true;
         } else if (std.mem.eql(u8, arg, "-o") or std.mem.eql(u8, arg, "--output")) {
@@ -40,7 +42,7 @@ pub fn main() !void {
             output_file = args[i];
         } else if (std.mem.eql(u8, arg, "-k") or std.mem.eql(u8, arg, "--key")) {
             if (i + 1 >= args.len) {
-                try stdout.print("Error: -k requires key value\n", .{});
+                try stdout.print("Error: -k requires hex key value (e.g. -k 42 means key is 0x42)\n", .{});
                 return;
             }
             i += 1;
@@ -59,19 +61,34 @@ pub fn main() !void {
         return;
     }
 
-    // Default output filename if not specified
     const filename = target_file.?;
     const output_filename = output_file orelse
-        try std.fmt.allocPrint(allocator, "{s}.packed", .{filename});
+        try getOutputFilename(allocator, filename); // Default output filename if not specified
     defer if (output_file == null) allocator.free(output_filename);
 
     if (verbose) {
-        try stdout.print("                       Zyra Packer v{s}\n", .{version});
-        try stdout.print("        Copyright (C) 2025 @CX330Blake. All rights reserved.\n\n", .{});
+        try printVersion();
     }
 
     // Pack the file
     try packFile(allocator, filename, output_filename, key, verbose);
+}
+
+fn getOutputFilename(allocator: std.mem.Allocator, filename: []const u8) ![]const u8 {
+    const dot_idx = std.mem.lastIndexOf(u8, filename, ".");
+    if (dot_idx) |idx| {
+        const base = filename[0..idx];
+        const ext = filename[idx..]; // Includes "."
+        return try std.fmt.allocPrint(allocator, "{s}_zyra{s}", .{ base, ext });
+    } else {
+        return try std.fmt.allocPrint(allocator, "{s}_zyra", .{filename});
+    }
+}
+
+fn printVersion() !void {
+    const stdout = std.io.getStdOut().writer();
+    try stdout.print("                       Zyra Packer v{s}\n", .{version});
+    try stdout.print("        Copyright (C) 2025 @CX330Blake. All rights reserved.\n\n", .{});
 }
 
 fn packFile(allocator: std.mem.Allocator, input_path: []const u8, output_path: []const u8, key: u8, verbose: bool) !void {
@@ -90,6 +107,7 @@ fn packFile(allocator: std.mem.Allocator, input_path: []const u8, output_path: [
     };
     defer file.close();
 
+    // Maximum input is 100MB
     const input_data = file.readToEndAlloc(allocator, 100 * 1024 * 1024) catch |err| {
         try stdout.print("Error: Cannot read input file: {}\n", .{err});
         return;
@@ -99,13 +117,13 @@ fn packFile(allocator: std.mem.Allocator, input_path: []const u8, output_path: [
     if (verbose) try stdout.print("Encrypting...   ", .{});
 
     // Encrypt
-    const encrypted = try encryptor.xor_encrypt(allocator, input_data, key);
+    const encrypted = try encryptor.xorEncrypt(allocator, input_data, key);
     defer allocator.free(encrypted);
 
     if (verbose) try stdout.print("OK\nPacking...      ", .{});
 
     // Pack
-    const packed_binary = try packer.pack_elf_stub(allocator, encrypted, key);
+    const packed_binary = try packer.packElfStub(allocator, encrypted, key);
     defer allocator.free(packed_binary);
 
     if (verbose) try stdout.print("OK\nWriting...      ", .{});
@@ -124,11 +142,11 @@ fn packFile(allocator: std.mem.Allocator, input_path: []const u8, output_path: [
 
     if (verbose) try stdout.print("OK\n\n", .{});
 
-    // Summary (like UPX) - Fixed the format specifier
+    // Summary - Fixed the format specifier
     const ratio = @as(f64, @floatFromInt(packed_binary.len)) / @as(f64, @floatFromInt(input_data.len)) * 100.0;
 
     try stdout.print("File size         Ratio      Format      Name\n", .{});
-    try stdout.print("--------------------------------------------\n", .{});
+    try stdout.print("-------------------------------------------------\n", .{});
     try stdout.print("{d} <- {d}    {d:.1}%     zyra        {s}\n", .{ packed_binary.len, input_data.len, ratio, output_path });
 
     if (!verbose) {
@@ -147,7 +165,7 @@ fn printUsage(program_name: []const u8) !void {
         \\  -h, --help           Show this help message
         \\  -v, --verbose        Verbose output
         \\  -o, --output FILE    Output file name (default: input.packed)
-        \\  -k, --key HEX        Encryption key in hex (default: 42)
+        \\  -k, --key HEX        Encryption key in hex (default: 0x42)
         \\
         \\Examples:
         \\  {s} /bin/ls                    # Pack ls -> ls.packed
