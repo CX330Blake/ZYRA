@@ -1,62 +1,57 @@
 const std = @import("std");
 const decryptor = @import("decryptor.zig");
-const linux = std.os.linux;
 
-// These will be replaced by the packer
-const ENCRYPTED_PAYLOAD_SIZE: usize = SIZE_PLACEHOLDER_12345678;
-const DECRYPTION_KEY: u8 = 0x42;
-
-// Payload data will be embedded here
-// PAYLOAD_DATA_PLACEHOLDER
+const PAYLOAD_START_MARKER = "PAYLOAD_START_MARKER";
 
 pub fn main() !void {
     const allocator = std.heap.page_allocator;
 
-    // Get the encrypted payload from the binary
-    const payload_data = get_embedded_payload();
+    // Get and decrypt payload
+    const payload_data = try get_embedded_payload(allocator);
+    defer allocator.free(payload_data);
 
-    // Decrypt the payload
-    const decrypted = try decryptor.xor_decrypt(allocator, payload_data, DECRYPTION_KEY);
+    const key = payload_data[0];
+    const encrypted_payload = payload_data[1..];
+    const decrypted = try decryptor.xor_decrypt(allocator, encrypted_payload, key);
     defer allocator.free(decrypted);
 
-    // Memory mapping constants
-    const PROT_READ = 0x1;
-    const PROT_WRITE = 0x2;
-    const PROT_EXEC = 0x4;
-    const MAP_PRIVATE = 0x02;
-    const MAP_ANONYMOUS = 0x20;
-
-    // Allocate executable memory
-    const mem = linux.mmap(
-        null,
-        decrypted.len,
-        PROT_READ | PROT_WRITE | PROT_EXEC,
-        MAP_PRIVATE | MAP_ANONYMOUS,
-        -1,
-        0,
-    );
-
-    if (mem == linux.MAP_FAILED) {
-        return error.MemoryMapFailed;
-    }
-
-    // Copy decrypted payload to executable memory
-    const dst: [*]u8 = @ptrCast(mem);
-    @memcpy(dst[0..decrypted.len], decrypted);
-
-    // Execute the payload
-    const fn_ptr: *const fn () callconv(.C) void = @ptrCast(mem);
-    fn_ptr();
+    // Execute via tempfile
+    try execute_via_tempfile(decrypted);
 }
 
-fn get_embedded_payload() []const u8 {
-    // Find the payload in the binary data section
-    const self_binary = std.fs.cwd().readFileAlloc(std.heap.page_allocator, "/proc/self/exe", 100 * 1024 * 1024) catch return &[_]u8{};
+fn get_embedded_payload(allocator: std.mem.Allocator) ![]u8 {
+    const self_binary = try std.fs.cwd().readFileAlloc(allocator, "/proc/self/exe", 100 * 1024 * 1024);
+    defer allocator.free(self_binary);
 
-    const marker = "PAYLOAD_START_MARKER";
-    if (std.mem.indexOf(u8, self_binary, marker)) |start| {
-        const payload_start = start + marker.len;
-        return self_binary[payload_start .. payload_start + ENCRYPTED_PAYLOAD_SIZE];
+    if (std.mem.lastIndexOf(u8, self_binary, PAYLOAD_START_MARKER)) |marker_start| {
+        const data_start = marker_start + PAYLOAD_START_MARKER.len;
+        const size_bytes = self_binary[data_start .. data_start + 8];
+        const payload_size = std.mem.readInt(u64, size_bytes[0..8], .little);
+
+        const payload_start = data_start + 8;
+        const total_payload_size = payload_size + 1;
+        const payload = try allocator.alloc(u8, total_payload_size);
+        @memcpy(payload, self_binary[payload_start .. payload_start + total_payload_size]);
+        return payload;
     }
-    return &[_]u8{};
+    return error.PayloadNotFound;
+}
+
+fn execute_via_tempfile(payload: []const u8) !void {
+    var temp_name_buffer: [256]u8 = undefined;
+    const temp_name = try std.fmt.bufPrint(&temp_name_buffer, "/tmp/zyra_{}", .{std.time.timestamp()});
+
+    const temp_file = try std.fs.cwd().createFile(temp_name, .{});
+    defer temp_file.close();
+    defer std.fs.cwd().deleteFile(temp_name) catch {};
+
+    try temp_file.writeAll(payload);
+    try temp_file.chmod(0o755);
+    temp_file.close();
+
+    var process = std.process.Child.init(&[_][]const u8{temp_name}, std.heap.page_allocator);
+    process.stdin_behavior = .Inherit;
+    process.stdout_behavior = .Inherit;
+    process.stderr_behavior = .Inherit;
+    _ = try process.spawnAndWait();
 }

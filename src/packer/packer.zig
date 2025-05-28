@@ -1,50 +1,39 @@
 const std = @import("std");
-
-const ELF_STUB_TEMPLATE = @embedFile("");
+const embedded_stub = @import("../embedded_stub.zig");
 
 pub fn pack_elf_stub(allocator: std.mem.Allocator, encrypted_payload: []const u8, key: u8) ![]u8 {
-    // Magic markers to find and replace in the stub
-    const PAYLOAD_MARKER = "PAYLOAD_DATA_PLACEHOLDER";
-    const KEY_MARKER = "KEY_PLACEHOLDER_42";
-    const SIZE_MARKER = "SIZE_PLACEHOLDER_12345678";
+    const stub_binary = &embedded_stub.ELF_STUB_BINARY;
 
-    var stub_data = try allocator.dupe(u8, ELF_STUB_TEMPLATE);
+    // Simply append our data to the end of the stub binary
+    // The stub will scan for the marker and read from there
+    const marker = "PAYLOAD_START_MARKER";
 
-    // Find and replace payload size
-    const size_str = try std.fmt.allocPrint(allocator, "{d}", .{encrypted_payload.len});
-    defer allocator.free(size_str);
+    // Calculate total size: stub + marker + size + key + payload
+    const total_size = stub_binary.len + marker.len + 8 + 1 + encrypted_payload.len;
+    var packed_binary = try allocator.alloc(u8, total_size);
 
-    if (std.mem.indexOf(u8, stub_data, SIZE_MARKER)) |size_pos| {
-        // Replace size marker with actual size (pad with spaces if needed)
-        const marker_len = SIZE_MARKER.len;
-        @memset(stub_data[size_pos .. size_pos + marker_len], ' ');
-        @memcpy(stub_data[size_pos .. size_pos + size_str.len], size_str);
-    }
+    var offset: usize = 0;
 
-    // Find and replace key
-    if (std.mem.indexOf(u8, stub_data, KEY_MARKER)) |key_pos| {
-        stub_data[key_pos] = key;
-    }
+    // Copy the entire stub binary
+    @memcpy(packed_binary[offset .. offset + stub_binary.len], stub_binary);
+    offset += stub_binary.len;
 
-    // Find payload marker and replace with actual encrypted data
-    if (std.mem.indexOf(u8, stub_data, PAYLOAD_MARKER)) |payload_pos| {
-        // Calculate new total size
-        const new_size = stub_data.len - PAYLOAD_MARKER.len + encrypted_payload.len;
-        var new_stub = try allocator.alloc(u8, new_size);
+    // Append marker
+    @memcpy(packed_binary[offset .. offset + marker.len], marker);
+    offset += marker.len;
 
-        // Copy before marker
-        @memcpy(new_stub[0..payload_pos], stub_data[0..payload_pos]);
+    // Append payload size (8 bytes, little endian)
+    var size_bytes: [8]u8 = undefined;
+    std.mem.writeInt(u64, &size_bytes, encrypted_payload.len, .little);
+    @memcpy(packed_binary[offset .. offset + 8], &size_bytes);
+    offset += 8;
 
-        // Copy encrypted payload
-        @memcpy(new_stub[payload_pos .. payload_pos + encrypted_payload.len], encrypted_payload);
+    // Append key
+    packed_binary[offset] = key;
+    offset += 1;
 
-        // Copy after marker
-        const after_marker_start = payload_pos + PAYLOAD_MARKER.len;
-        @memcpy(new_stub[payload_pos + encrypted_payload.len ..], stub_data[after_marker_start..]);
+    // Append encrypted payload
+    @memcpy(packed_binary[offset .. offset + encrypted_payload.len], encrypted_payload);
 
-        allocator.free(stub_data);
-        return new_stub;
-    }
-
-    return stub_data;
+    return packed_binary;
 }
