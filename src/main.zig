@@ -79,9 +79,9 @@ fn getOutputFilename(allocator: std.mem.Allocator, filename: []const u8) ![]cons
     if (dot_idx) |idx| {
         const base = filename[0..idx];
         const ext = filename[idx..]; // Includes "."
-        return try std.fmt.allocPrint(allocator, "{s}_zyra{s}", .{ base, ext });
+        return try std.fmt.allocPrint(allocator, "{s}.zyra{s}", .{ base, ext });
     } else {
-        return try std.fmt.allocPrint(allocator, "{s}_zyra", .{filename});
+        return try std.fmt.allocPrint(allocator, "{s}.zyra", .{filename});
     }
 }
 
@@ -168,7 +168,7 @@ fn printUsage(program_name: []const u8) !void {
         \\  -k, --key HEX        Encryption key in hex (default: 0x42)
         \\
         \\Examples:
-        \\  {s} /bin/ls                    # Pack ls -> ls.packed
+        \\  {s} /bin/ls                    # Pack ls -> ls.zyra
         \\  {s} -o myapp.exe program       # Pack program -> myapp.exe
         \\  {s} -k FF -v /usr/bin/cat      # Pack with key 0xFF, verbose
         \\
