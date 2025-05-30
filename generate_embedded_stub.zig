@@ -17,9 +17,14 @@ pub fn main() !void {
         return;
     }
 
-    // Read the built binary (maximum size 100MB)
-    // TODO: Get the file size before memory allocation
-    const stub_data = try std.fs.cwd().readFileAlloc(allocator, "temp_stub", 100 * 1024 * 1024);
+    // Get the temp stub file size first
+    const temp_stub_file = try std.fs.cwd().openFile("temp_stub", .{});
+    defer temp_stub_file.close();
+    const stub_stat = try temp_stub_file.stat();
+    const stub_size = stub_stat.size;
+
+    // Allocate buffer with exact size
+    const stub_data = try std.fs.cwd().readFileAlloc(allocator, "temp_stub", stub_size);
     defer allocator.free(stub_data);
 
     // Generate Zig source code with embedded binary
@@ -42,6 +47,7 @@ pub fn main() !void {
 
     // Clean up
     std.fs.cwd().deleteFile("temp_stub") catch {};
+    std.fs.cwd().deleteFile("temp_stub.o") catch {};
 
     std.debug.print("✅ Embedded stub generated: src/embedded_{s}.zig\n", .{stub_filename});
     std.debug.print("📦 Stub size: {} bytes\n", .{stub_data.len});

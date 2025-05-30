@@ -18,3 +18,8 @@ Zyra is an Zig-written obfuscator/packer/loader for binaries.
 | payload_len (u64 LE)      | -                  |
 | key (u8)                  | Decrypt key        |
 | encrypted_payload (bytes) | -                  |
+
+## To-Do
+
+1. Add support for PE file format
+2. Add suuport for anti-debugging (by IsDebuggerPresent API perhaps)

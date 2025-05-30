@@ -1,9 +1,9 @@
 const std = @import("std");
 // TODO: support more architecture like PE and Mach-O
-const embedded_stub = @import("../embedded_elf_stub.zig");
+const embedded_elf_stub = @import("../embedded_elf_stub.zig");
 
 pub fn packElfStub(allocator: std.mem.Allocator, encrypted_payload: []const u8, key: u8) ![]u8 {
-    const stub_binary = &embedded_stub.ELF_STUB_BINARY;
+    const stub_binary = &embedded_elf_stub.ELF_STUB_BINARY;
 
     // Simply append our data to the end of the stub binary
     // The stub will scan for the marker and read from there
