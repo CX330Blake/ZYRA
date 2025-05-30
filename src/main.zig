@@ -2,6 +2,12 @@ const std = @import("std");
 const encryptor = @import("packer/encryptor.zig");
 const packer = @import("packer/packer.zig");
 const build_options = @import("build_options");
+const stub = @import("packer/stub.zig");
+const arch_identifier = @import("preprocess/arch_identifier.zig");
+
+const FileFormat = arch_identifier.FileFormat;
+const Arch = arch_identifier.Arch;
+const BinType = arch_identifier.BinType;
 
 const version = build_options.version_string;
 
@@ -22,6 +28,7 @@ pub fn main() !void {
     var key: u8 = 0x42; // Default key
     var verbose = false; // Default verbose mode off
 
+    // Parsing args
     var i: usize = 1;
     while (i < args.len) : (i += 1) {
         const arg = args[i];
@@ -29,7 +36,7 @@ pub fn main() !void {
         if (std.mem.eql(u8, arg, "-h") or std.mem.eql(u8, arg, "--help")) {
             try printUsage(args[0]);
             return;
-        } else if (std.mem.eql(u8, arg, "--verbose")) {
+        } else if (std.mem.eql(u8, arg, "--version")) {
             try printVersion();
         } else if (std.mem.eql(u8, arg, "-v") or std.mem.eql(u8, arg, "--verbose")) {
             verbose = true;
@@ -66,12 +73,14 @@ pub fn main() !void {
         try getOutputFilename(allocator, filename); // Default output filename if not specified
     defer if (output_file == null) allocator.free(output_filename);
 
-    if (verbose) {
-        try printVersion();
-    }
+    // Print the version banner
+    try printVersion();
+
+    // Identify the arch and format
+    const bin_type: BinType = try arch_identifier.identifyExecutableFormat(filename);
 
     // Pack the file
-    try packFile(allocator, filename, output_filename, key, verbose);
+    try packFile(allocator, filename, bin_type, output_filename, key, verbose);
 }
 
 fn getOutputFilename(allocator: std.mem.Allocator, filename: []const u8) ![]const u8 {
@@ -91,11 +100,37 @@ fn printVersion() !void {
     try stdout.print("        Copyright (C) 2025 @CX330Blake. All rights reserved.\n\n", .{});
 }
 
-fn packFile(allocator: std.mem.Allocator, input_path: []const u8, output_path: []const u8, key: u8, verbose: bool) !void {
+fn packFile(allocator: std.mem.Allocator, input_path: []const u8, bin_type: BinType, output_path: []const u8, key: u8, verbose: bool) !void {
     const stdout = std.io.getStdOut().writer();
+
+    const FileType = enum {
+        elf_x86,
+        elf_x86_64,
+        pe_x86,
+        pe_x86_64,
+        unknown,
+    };
+
+    const format = bin_type.format;
+    const arch = bin_type.arch;
+    var file_type: FileType = .unknown;
+
+    if (format == .elf and arch == .x64) {
+        file_type = .elf_x86_64;
+    } else if (format == .elf and arch == .x86) {
+        file_type = .elf_x86;
+    } else if (format == .pe and arch == .x64) {
+        file_type = .elf_x86_64;
+    } else if (format == .pe and arch == .x86) {
+        file_type = .elf_x86;
+    } else {
+        try stdout.print("Error: Unknown file format or architecture\n", .{});
+        return;
+    }
 
     if (verbose) {
         try stdout.print("Input file:     {s}\n", .{input_path});
+        try stdout.print("File format:     {s}\n", .{@tagName(file_type)});
         try stdout.print("Output file:    {s}\n", .{output_path});
         try stdout.print("Encryption key: 0x{X:0>2}\n\n", .{key});
     }
@@ -123,7 +158,7 @@ fn packFile(allocator: std.mem.Allocator, input_path: []const u8, output_path: [
     if (verbose) try stdout.print("OK\nPacking...      ", .{});
 
     // Pack
-    const packed_binary = try packer.packElfStub(allocator, encrypted, key);
+    const packed_binary = try packer.packStub(allocator, bin_type, encrypted, key);
     defer allocator.free(packed_binary);
 
     if (verbose) try stdout.print("OK\nWriting...      ", .{});
@@ -144,10 +179,10 @@ fn packFile(allocator: std.mem.Allocator, input_path: []const u8, output_path: [
 
     // Summary - Fixed the format specifier
     const ratio = @as(f64, @floatFromInt(packed_binary.len)) / @as(f64, @floatFromInt(input_data.len)) * 100.0;
-
-    try stdout.print("File size         Ratio      Format      Name\n", .{});
-    try stdout.print("-------------------------------------------------\n", .{});
-    try stdout.print("{d} <- {d}    {d:.1}%     zyra        {s}\n", .{ packed_binary.len, input_data.len, ratio, output_path });
+    try stdout.print("📁 File size: {d} <- {d}\n", .{ packed_binary.len, input_data.len });
+    try stdout.print("📉 Ratio:     {d:.1}%\n", .{ratio});
+    try stdout.print("🖥️ Format:    {s}\n", .{@tagName(file_type)});
+    try stdout.print("👀 Name:      {s}\n", .{output_path});
 
     if (!verbose) {
         try stdout.print("\nPacked 1 file.\n", .{});
