@@ -1,15 +1,14 @@
 const std = @import("std");
 const encryptor = @import("packer/encryptor.zig");
 const packer = @import("packer/packer.zig");
-const build_options = @import("build_options");
 const stub = @import("packer/stub.zig");
 const arch_identifier = @import("preprocess/arch_identifier.zig");
+const output = @import("utils/output.zig");
 
 const FileFormat = arch_identifier.FileFormat;
 const Arch = arch_identifier.Arch;
 const BinType = arch_identifier.BinType;
-
-const version = build_options.version_string;
+const FileType = arch_identifier.FileType;
 
 pub fn main() !void {
     const allocator = std.heap.page_allocator;
@@ -19,7 +18,7 @@ pub fn main() !void {
 
     // Needs an input file
     if (args.len < 2) {
-        try printUsage(args[0]);
+        try output.printUsage();
         return;
     }
 
@@ -34,22 +33,23 @@ pub fn main() !void {
         const arg = args[i];
 
         if (std.mem.eql(u8, arg, "-h") or std.mem.eql(u8, arg, "--help")) {
-            try printUsage(args[0]);
+            try output.printUsage();
             return;
         } else if (std.mem.eql(u8, arg, "--version")) {
-            try printVersion();
+            try output.printVersion();
+            return;
         } else if (std.mem.eql(u8, arg, "-v") or std.mem.eql(u8, arg, "--verbose")) {
             verbose = true;
         } else if (std.mem.eql(u8, arg, "-o") or std.mem.eql(u8, arg, "--output")) {
             if (i + 1 >= args.len) {
-                try stdout.print("Error: -o requires output filename\n", .{});
+                try output.printError("Error: -o requires output filename\n", .{});
                 return;
             }
             i += 1;
             output_file = args[i];
         } else if (std.mem.eql(u8, arg, "-k") or std.mem.eql(u8, arg, "--key")) {
             if (i + 1 >= args.len) {
-                try stdout.print("Error: -k requires hex key value (e.g. -k 42 means key is 0x42)\n", .{});
+                try output.printError("Error: -k requires hex key value (e.g. -k 42 means key is 0x42)\n", .{});
                 return;
             }
             i += 1;
@@ -63,8 +63,8 @@ pub fn main() !void {
     }
 
     if (target_file == null) {
-        try stdout.print("Error: No input file specified\n", .{});
-        try printUsage(args[0]);
+        try output.printError("Error: No input file specified\n", .{});
+        try output.printUsage();
         return;
     }
 
@@ -74,10 +74,13 @@ pub fn main() !void {
     defer if (output_file == null) allocator.free(output_filename);
 
     // Print the version banner
-    try printVersion();
+    try output.printVersion();
 
     // Identify the arch and format
-    const bin_type: BinType = try arch_identifier.identifyExecutableFormat(filename);
+    const bin_type: BinType = arch_identifier.identifyExecutableFormat(filename) catch {
+        try output.printError("Error: {s} not exist\n", .{filename});
+        return;
+    };
 
     // Pack the file
     try packFile(allocator, filename, bin_type, output_filename, key, verbose);
@@ -94,22 +97,8 @@ fn getOutputFilename(allocator: std.mem.Allocator, filename: []const u8) ![]cons
     }
 }
 
-fn printVersion() !void {
-    const stdout = std.io.getStdOut().writer();
-    try stdout.print("                       Zyra Packer v{s}\n", .{version});
-    try stdout.print("        Copyright (C) 2025 @CX330Blake. All rights reserved.\n\n", .{});
-}
-
 fn packFile(allocator: std.mem.Allocator, input_path: []const u8, bin_type: BinType, output_path: []const u8, key: u8, verbose: bool) !void {
     const stdout = std.io.getStdOut().writer();
-
-    const FileType = enum {
-        elf_x86,
-        elf_x86_64,
-        pe_x86,
-        pe_x86_64,
-        unknown,
-    };
 
     const format = bin_type.format;
     const arch = bin_type.arch;
@@ -124,7 +113,7 @@ fn packFile(allocator: std.mem.Allocator, input_path: []const u8, bin_type: BinT
     } else if (format == .pe and arch == .x86) {
         file_type = .elf_x86;
     } else {
-        try stdout.print("Error: Unknown file format or architecture\n", .{});
+        try output.printError("Error: Unknown file format or architecture\n", .{});
         return;
     }
 
@@ -137,14 +126,14 @@ fn packFile(allocator: std.mem.Allocator, input_path: []const u8, bin_type: BinT
 
     // Read input file
     const file = std.fs.cwd().openFile(input_path, .{}) catch |err| {
-        try stdout.print("Error: Cannot open input file '{s}': {}\n", .{ input_path, err });
+        try output.printError("Error: Cannot open input file '{s}': {}\n", .{ input_path, err });
         return;
     };
     defer file.close();
 
     // Maximum input is 100MB
     const input_data = file.readToEndAlloc(allocator, 100 * 1024 * 1024) catch |err| {
-        try stdout.print("Error: Cannot read input file: {}\n", .{err});
+        try output.printError("Error: Cannot read input file: {}\n", .{err});
         return;
     };
     defer allocator.free(input_data);
@@ -165,7 +154,7 @@ fn packFile(allocator: std.mem.Allocator, input_path: []const u8, bin_type: BinT
 
     // Write output
     const output_file_handle = std.fs.cwd().createFile(output_path, .{}) catch |err| {
-        try stdout.print("Error: Cannot create output file '{s}': {}\n", .{ output_path, err });
+        try output.printError("Error: Cannot create output file '{s}': {}\n", .{ output_path, err });
         return;
     };
     defer output_file_handle.close();
@@ -178,34 +167,9 @@ fn packFile(allocator: std.mem.Allocator, input_path: []const u8, bin_type: BinT
     if (verbose) try stdout.print("OK\n\n", .{});
 
     // Summary - Fixed the format specifier
-    const ratio = @as(f64, @floatFromInt(packed_binary.len)) / @as(f64, @floatFromInt(input_data.len)) * 100.0;
-    try stdout.print("📁 File size: {d} <- {d}\n", .{ packed_binary.len, input_data.len });
-    try stdout.print("📉 Ratio:     {d:.1}%\n", .{ratio});
-    try stdout.print("🖥️ Format:    {s}\n", .{@tagName(file_type)});
-    try stdout.print("👀 Name:      {s}\n", .{output_path});
+    try output.printResult(packed_binary.len, input_data.len, key, file_type, output_path);
 
     if (!verbose) {
-        try stdout.print("\nPacked 1 file.\n", .{});
+        try stdout.print("Packed 1 file.\n", .{});
     }
-}
-
-fn printUsage(program_name: []const u8) !void {
-    const stdout = std.io.getStdOut().writer();
-    try stdout.print(
-        \\Zyra Packer v{s} - Binary packer and obfuscator
-        \\
-        \\Usage: {s} [options] file
-        \\
-        \\Options:
-        \\  -h, --help           Show this help message
-        \\  -v, --verbose        Verbose output
-        \\  -o, --output FILE    Output file name (default: input.packed)
-        \\  -k, --key HEX        Encryption key in hex (default: 0x42)
-        \\
-        \\Examples:
-        \\  {s} /bin/ls                    # Pack ls -> ls.zyra
-        \\  {s} -o myapp.exe program       # Pack program -> myapp.exe
-        \\  {s} -k FF -v /usr/bin/cat      # Pack with key 0xFF, verbose
-        \\
-    , .{ version, program_name, program_name, program_name, program_name });
 }

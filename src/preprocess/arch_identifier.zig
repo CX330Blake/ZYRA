@@ -1,4 +1,5 @@
 const std = @import("std");
+const output = @import("../utils/output.zig");
 
 pub const FileFormat = enum {
     elf,
@@ -15,6 +16,14 @@ pub const Arch = enum {
 pub const BinType = struct {
     format: FileFormat,
     arch: Arch,
+};
+
+pub const FileType = enum {
+    elf_x86,
+    elf_x86_64,
+    pe_x86,
+    pe_x86_64,
+    unknown,
 };
 
 /// Attempts to identify the file format and architecture.
