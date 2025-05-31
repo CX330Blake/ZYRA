@@ -109,9 +109,9 @@ fn packFile(allocator: std.mem.Allocator, input_path: []const u8, bin_type: BinT
     } else if (format == .elf and arch == .x86) {
         file_type = .elf_x86;
     } else if (format == .pe and arch == .x64) {
-        file_type = .elf_x86_64;
+        file_type = .pe_x86_64;
     } else if (format == .pe and arch == .x86) {
-        file_type = .elf_x86;
+        file_type = .pe_x86;
     } else {
         try output.printError("Error: Unknown file format or architecture\n", .{});
         return;
