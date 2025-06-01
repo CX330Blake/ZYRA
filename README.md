@@ -43,7 +43,7 @@ bash <(curl -sSL https://raw.githubusercontent.com/CX330Blake/ZYRA/main/install.
 
 | Section                   | Description        |
 | ------------------------- | ------------------ |
-| ELF STUB BINARY           | The "outer" binary |
+| Stub binary               | The "outer" binary |
 | "PAYLOAD_START_MARKER"    | Payload begin      |
 | payload_len (u64 LE)      | -                  |
 | key (u8)                  | Decrypt key        |
