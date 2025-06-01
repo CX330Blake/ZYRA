@@ -9,7 +9,7 @@ ZYRA is a Zig-based obfuscator, packer, and loader designed to protect executabl
 
 ## Showcase
 
-If you wonder the effectiveness of ZYRA, you should check this simple "hello world" binary out. In the following example, I'm gonna use Binary Ninja as the decompiler.
+If you wonder the effectiveness of ZYRA, you should check this simple "hello world" binary out. In the following example, I'm gonna use Binary Ninja as the decompiler. You can get the example binaries in [examples](./examples/).
 
 Before using ZYRA, we can see that it's as simple as f\*\*k to reverse engineer.
 
@@ -29,8 +29,7 @@ You can simply copy and paste the following one-liner to install ZYRA.
 bash <(curl -sSL https://raw.githubusercontent.com/CX330Blake/ZYRA/main/install.sh)
 ```
 
-:::> [!WARNING]
-
+> [!WARNING]  
 > Never execute any untrusted script on your machine. Read the script first.
 
 ## Workflow under the hood
