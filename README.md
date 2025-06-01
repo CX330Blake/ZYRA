@@ -1,8 +1,39 @@
-# ZYRA: Your Reverser Assassin
+# ZYRA: Your Runtime Armor 🛡️
 
-Zyra is an Zig-written obfuscator/packer/loader for binaries.
+ZYRA is a Zig-based obfuscator, packer, and loader designed to protect executable files from static analysis and reverse engineering.
 
-## Workflow
+- ✨ Written in Zig for performance and control
+- 👌 Easy to install with one-liner command
+- 🔄 Generate a much more complicated control flow for packed binary to anti-reversing
+- 🛡️ Provides runtime decryption and execution, shielding payloads from inspection
+
+## Showcase
+
+If you wonder the effectiveness of ZYRA, you should check this simple "hello world" binary out. In the following example, I'm gonna use Binary Ninja as the decompiler.
+
+Before using ZYRA, we can see that it's as simple as f\*\*k to reverse engineer.
+
+![Before ZYRA](./assets/BeforeZyra.png)
+
+But after ZYRA, it's much more complicated! You can see the control flow graph is so complicated to trace (but it's not perfect yet).
+
+![After ZYRA](./assets/AfterZyra.png)
+
+## Installation
+
+ZYRA is now currently support Linux only, but the Windows version will be released soon.
+
+You can simply copy and paste the following one-liner to install ZYRA.
+
+```bash
+bash <(curl -sSL https://raw.githubusercontent.com/CX330Blake/ZYRA/main/install.sh)
+```
+
+:::> [!WARNING]
+
+> Never execute any untrusted script on your machine. Read the script first.
+
+## Workflow under the hood
 
 1. Generate the embedded stub (generate_embedded_stub.zig)
 2. Encrypt the payload (src/main.zig)
@@ -21,5 +52,24 @@ Zyra is an Zig-written obfuscator/packer/loader for binaries.
 
 ## To-Do
 
-1. Add support for PE file format
-2. Add suuport for anti-debugging (by IsDebuggerPresent API perhaps)
+1. Add support for anti-debugging.
+2. Add more advanced techniques.
+
+    - Encryption
+        - RC4
+        - ChaCha20
+        - TEA
+        - etc
+    - Packing
+
+        - Run-length encoding
+        - LZ77
+        - Huffman coding
+        - etc
+
+   - Obfuscation
+        -
+
+## Contribution
+
+This project is maintained by [@CX330Blake](https://github.com/CX330Blake/). PRs are welcome if you also want to contribute to this project.
