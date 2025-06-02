@@ -43,12 +43,17 @@ jobs:
               run: |
                   zig build --release=fast
 
+            - name: Rename binary for release
+              if: steps.tag_check.outputs.release_needed == 'true'
+              run: |
+                  cp zig-out/bin/zyra zyra-linux-x86_64
+
             - name: Release
               if: steps.tag_check.outputs.release_needed == 'true'
               uses: softprops/action-gh-release@v1
               with:
                   tag_name: v${{ steps.version.outputs.version }}
                   name: v${{ steps.version.outputs.version }}
-                  files: zig-out/bin/zyra
+                  files: zyra-linux-x86_64
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
