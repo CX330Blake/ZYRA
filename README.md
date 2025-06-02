@@ -27,7 +27,7 @@
 
 ## What's ZYRA?
 
-ZYRA is a Zig-based obfuscator, packer, and loader designed to protect executable files from static analysis and reverse engineering.
+ZYRA is a Zig-based obfuscator, packer, and loader designed to **protect executable files** from static analysis and reverse engineering.
 
 - ✨ Written in Zig for performance and control
 - 👌 Easy to install with one-liner command

