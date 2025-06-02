@@ -1,11 +1,11 @@
 # ZYRA: Your Runtime Armor 🛡️
 
 <p align="center">
-  <a href="https://www.blackhat.com/asia-24/arsenal/schedule/#cf-hero-37767"><img src="https://img.shields.io/badge/Black%20Hat-Arsenal%2024-blue"></a>
-  <a href="https://pkg.go.dev/github.com/musana/cf-hero"><img src="https://pkg.go.dev/badge/github.com/musana/cf-hero.svg"></a>
-  <a href="https://goreportcard.com/report/github.com/musana/cf-hero"><img src="https://goreportcard.com/badge/github.com/musana/cf-hero"></a>
-  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg"></a>
-  <a href="https://twitter.com/musana"><img src="https://img.shields.io/twitter/follow/musana.svg?logo=twitter"></a>
+  <img alt="GitHub License" src="https://img.shields.io/github/license/CX330Blake/zyra">
+  <img alt="GitHub top language" src="https://img.shields.io/github/languages/top/cx330blake/zyra">
+  <img alt="GitHub Downloads (all assets, all releases)" src="https://img.shields.io/github/downloads/cx330blake/zyra/total">
+  <img alt="GitHub repo size" src="https://img.shields.io/github/repo-size/cx330blake/zyra">
+  <img alt="X (formerly Twitter) Follow" src="https://img.shields.io/twitter/follow/CX330Blake">
 
 </p>
 
@@ -16,7 +16,7 @@
   <a href="#usage">Usage</a> •
   <a href="#workflow-under-the-hood">Workflow under the hood</a> •
   <a href="#packed-binary-structure">Packed binary structure</a> •
-  <a href="#to-do">To Do</a>
+  <a href="#to-do">To Do</a> • 
   <a href="#contribution">Contribution</a>
 </p>
 
@@ -112,14 +112,10 @@ Examples:
         - TEA
         - etc
     - Packing
-
         - Run-length encoding
         - LZ77
         - Huffman coding
         - etc
-
-   - Obfuscation
-        -
 
 ## Contribution
 
