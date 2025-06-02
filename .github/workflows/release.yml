@@ -41,7 +41,7 @@ jobs:
             - name: Build
               if: steps.tag_check.outputs.release_needed == 'true'
               run: |
-                  zig build --release=fast
+                  zig build --release=fast -Dtarget=x86_64-linux -Dcpu=baseline
 
             - name: Rename binary for release
               if: steps.tag_check.outputs.release_needed == 'true'
