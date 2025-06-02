@@ -60,7 +60,7 @@ bash <(curl -sSL https://raw.githubusercontent.com/CX330Blake/ZYRA/main/install.
 
 ## Usage
 
-```txt
+```
 ___  _   _ ____ ____
   /   \_/  |__/ |__|
  /__   |   |  \ |  |
