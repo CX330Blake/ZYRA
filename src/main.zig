@@ -1,7 +1,6 @@
 const std = @import("std");
 const encryptor = @import("packer/encryptor.zig");
 const packer = @import("packer/packer.zig");
-const stub = @import("packer/stub.zig");
 const arch_identifier = @import("preprocess/arch_identifier.zig");
 const output = @import("utils/output.zig");
 

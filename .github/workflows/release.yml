@@ -1,0 +1,49 @@
+name: Auto Release From build.zig
+
+on:
+    push:
+        branches:
+            - main
+
+jobs:
+    release:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v3
+
+            - name: Fetch tags
+              run: git fetch --tags
+
+            - name: Extract version from build.zig
+              id: version
+              run: |
+                  MAJOR=$(grep -Po '\.major = \K\d+' build.zig)
+                  MINOR=$(grep -Po '\.minor = \K\d+' build.zig)
+                  PATCH=$(grep -Po '\.patch = \K\d+' build.zig)
+                  VERSION="$MAJOR.$MINOR.$PATCH"
+                  echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+            - name: Check if tag exists
+              id: tag_check
+              run: |
+                  if git tag | grep -Fxq "v${{ steps.version.outputs.version }}"; then
+                    echo "release_needed=false" >> "$GITHUB_OUTPUT"
+                  else
+                    echo "release_needed=true" >> "$GITHUB_OUTPUT"
+                  fi
+
+            - name: Build
+              if: steps.tag_check.outputs.release_needed == 'true'
+              run: |
+                  zig build -Doptimize=ReleaseSafe
+
+            - name: Release
+              if: steps.tag_check.outputs.release_needed == 'true'
+              uses: softprops/action-gh-release@v1
+              with:
+                  tag_name: v${{ steps.version.outputs.version }}
+                  name: v${{ steps.version.outputs.version }}
+                  files: zig-out/bin/zyra
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

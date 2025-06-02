@@ -16,8 +16,8 @@
   <a href="#usage">Usage</a> •
   <a href="#workflow-under-the-hood">Workflow under the hood</a> •
   <a href="#packed-binary-structure">Packed binary structure</a> •
-  <a href="#to-do">To Do</a> • 
-  <a href="#contribution">Contribution</a> • 
+  <a href="#to-do">To Do</a> •
+  <a href="#contribution">Contribution</a> •
   <a href="#star-history">Star history</a>
 </p>
 
@@ -75,10 +75,10 @@ ___  _   _ ____ ____
   /   \_/  |__/ |__|
  /__   |   |  \ |  |
 
-Zyra Packer v0.1.0
+Zyra Packer v0.1.1
 Copyright (C) 2025 @CX330Blake.
 All rights reserved.
-Zyra Packer v0.1.0 - Binary packer and obfuscator
+Zyra Packer v0.1.1 - Binary packer and obfuscator
 
 Usage: zyra [options] <FILE>
 
@@ -98,14 +98,14 @@ Examples:
 
 1. Generate the embedded stub (generate_embedded_stub.zig)
 2. Encrypt the payload (src/main.zig)
-3. Embed & pack jthose payload in stub (src/packer/packer.zig)
-4. Decrypt and execute in runtime (src/packer/elf_stub.zig)
+3. Embed & pack those payload in the stub (src/packer/packer.zig)
+4. Decrypt and execute in runtime (src/packer/stub.zig)
 
 ## Packed binary structure
 
 | Section                   | Description        |
 | ------------------------- | ------------------ |
-| Stub binary               | The "outer" binary |
+| stub binary               | The "outer" binary |
 | "PAYLOAD_START_MARKER"    | Payload begin      |
 | payload_len (u64 LE)      | -                  |
 | key (u8)                  | Decrypt key        |
@@ -126,6 +126,8 @@ Examples:
         - LZ77
         - Huffman coding
         - etc
+
+3. Write unit tests (need help)
 
 ## Contribution
 
