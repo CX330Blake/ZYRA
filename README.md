@@ -17,7 +17,8 @@
   <a href="#workflow-under-the-hood">Workflow under the hood</a> •
   <a href="#packed-binary-structure">Packed binary structure</a> •
   <a href="#to-do">To Do</a> • 
-  <a href="#contribution">Contribution</a>
+  <a href="#contribution">Contribution</a> • 
+  <a href="#star-history">Star history</a>
 </p>
 
 <p height="300" align="center">
@@ -129,3 +130,7 @@ Examples:
 ## Contribution
 
 This project is maintained by [@CX330Blake](https://github.com/CX330Blake/). PRs are welcome if you also want to contribute to this project.
+
+## Star history
+
+[![Star History Chart](https://api.star-history.com/svg?repos=CX330Blake/ZYRA&type=Date)](https://www.star-history.com/#CX330Blake/ZYRA&Date)
