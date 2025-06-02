@@ -34,15 +34,16 @@ pub fn printVersion() !void {
 }
 
 pub fn printUsage() !void {
+    try printVersion();
     try stdout.print(
         \\Zyra Packer v{s} - Binary packer and obfuscator
         \\
-        \\Usage: zyra [options] file
+        \\Usage: zyra [options] <FILE>
         \\
         \\Options:
         \\  -h, --help           Show this help message
         \\  -v, --verbose        Verbose output
-        \\  -o, --output FILE    Output file name (default: input.packed)
+        \\  -o, --output FILE    Output file name (default: input.zyra)
         \\  -k, --key HEX        Encryption key in hex (default: 0x42)
         \\
         \\Examples:

@@ -1,5 +1,31 @@
 # ZYRA: Your Runtime Armor 🛡️
 
+<p align="center">
+  <a href="https://www.blackhat.com/asia-24/arsenal/schedule/#cf-hero-37767"><img src="https://img.shields.io/badge/Black%20Hat-Arsenal%2024-blue"></a>
+  <a href="https://pkg.go.dev/github.com/musana/cf-hero"><img src="https://pkg.go.dev/badge/github.com/musana/cf-hero.svg"></a>
+  <a href="https://goreportcard.com/report/github.com/musana/cf-hero"><img src="https://goreportcard.com/badge/github.com/musana/cf-hero"></a>
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg"></a>
+  <a href="https://twitter.com/musana"><img src="https://img.shields.io/twitter/follow/musana.svg?logo=twitter"></a>
+
+</p>
+
+<p align="center">
+  <a href="#whats-zyra">What's ZYRA?</a> •
+  <a href="#showcase">Showcase</a> •
+  <a href="#installation">Installation</a> •
+  <a href="#usage">Usage</a> •
+  <a href="#workflow-under-the-hood">Workflow under the hood</a> •
+  <a href="#packed-binary-structure">Packed binary structure</a> •
+  <a href="#to-do">To Do</a>
+  <a href="#contribution">Contribution</a>
+</p>
+
+<p height="300" align="center">
+  <img src="./assets/ZYRA.png">
+</p>
+
+## What's ZYRA?
+
 ZYRA is a Zig-based obfuscator, packer, and loader designed to protect executable files from static analysis and reverse engineering.
 
 - ✨ Written in Zig for performance and control
@@ -31,6 +57,32 @@ bash <(curl -sSL https://raw.githubusercontent.com/CX330Blake/ZYRA/main/install.
 
 > [!WARNING]  
 > Never execute any untrusted script on your machine. Read the script first.
+
+## Usage
+
+```txt
+___  _   _ ____ ____
+  /   \_/  |__/ |__|
+ /__   |   |  \ |  |
+
+Zyra Packer v0.1.0
+Copyright (C) 2025 @CX330Blake.
+All rights reserved.
+Zyra Packer v0.1.0 - Binary packer and obfuscator
+
+Usage: zyra [options] <FILE>
+
+Options:
+  -h, --help           Show this help message
+  -v, --verbose        Verbose output
+  -o, --output FILE    Output file name (default: input.zyra)
+  -k, --key HEX        Encryption key in hex (default: 0x42)
+
+Examples:
+  zyra /bin/ls                    # Pack ls -> ls.zyra
+  zyra -o myapp.exe program       # Pack program -> myapp.exe
+  zyra -k FF -v /usr/bin/cat      # Pack with key 0xFF, verbose
+```
 
 ## Workflow under the hood
 
