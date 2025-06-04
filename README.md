@@ -59,7 +59,7 @@ bash <(curl -sSL https://raw.githubusercontent.com/CX330Blake/ZYRA/main/install.
 > [!WARNING]  
 > Never execute any untrusted script on your machine. Read the script first.
 
-On the other hand, you can clone this repo and use the following command to build your own ZYRA biary.
+On the other hand, you can clone this repo and use the following command to build your own ZYRA binary.
 
 ```bash
 git clone https://github.com/CX330Blake/ZYRA
