@@ -25,11 +25,9 @@ pub fn printVersion() !void {
         \\ /__   |   |  \ |  | 
     ;
 
-    // try stdout.print("                       Zyra Packer v{s}\n", .{version});
-    // try stdout.print("        Copyright (C) 2025 @CX330Blake. All rights reserved.\n\n", .{});
     try stdout.print("{s}\n\n", .{banner});
     try stdout.print("Zyra Packer v{s}\n", .{version});
-    try stdout.print("Copyright (C) 2025 @CX330Blake.\n", .{});
+    try stdout.print("Copyright (C) 2025-{} @CX330Blake.\n", .{getCurrentYear()});
     try stdout.print("All rights reserved.\n", .{});
 }
 
@@ -63,4 +61,13 @@ pub fn printResult(packed_binary_len: usize, original_binary_len: usize, key: u8
     try stdout.print(" 🖥️ Format        │ {s}\n", .{@tagName(file_type)});
     try stdout.print(" 👀 Name          │ {s}\n", .{output_path});
     try stdout.print("──────────────────┴────────────────────────\n", .{});
+}
+
+/// Helper
+fn getCurrentYear() i32 {
+    const timestamp = std.time.timestamp();
+    const epoch_seconds = std.time.epoch.EpochSeconds{ .secs = @intCast(timestamp) };
+    const epoch_day = epoch_seconds.getEpochDay();
+    const year_day = epoch_day.calculateYearDay();
+    return year_day.year;
 }
