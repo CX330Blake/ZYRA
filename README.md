@@ -17,6 +17,7 @@
   <a href="#workflow-under-the-hood">Workflow under the hood</a> •
   <a href="#packed-binary-structure">Packed binary structure</a> •
   <a href="#to-do">To Do</a> •
+  <a href="#maldev-tools">Maldev Tools</a> •
   <a href="#contribution">Contribution</a> •
   <a href="#star-history">Star history</a>
 </p>
@@ -128,6 +129,13 @@ Examples:
         - etc
 
 3. Write unit tests (need help)
+
+## Maldev Tools
+
+- [Black-Hat-Zig](https://github.com/cx330blake/black-hat-zig)
+  - Malware development walkthrough using Zig
+- [ZYPE: Your Payload Encryptor](https://github.com/cx330blake/zype)
+  - Generate a code template in Zig containing your encrypted/obfuscated payload and the corresponding decrypting/deobfuscating function.
 
 ## Contribution
 
