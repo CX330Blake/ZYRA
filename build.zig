@@ -5,7 +5,7 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
 
     // Define version
-    const version = std.SemanticVersion{ .major = 0, .minor = 1, .patch = 5 };
+    const version = std.SemanticVersion{ .major = 0, .minor = 1, .patch = 6 };
 
     // Create build options to pass version to the code
     const options = b.addOptions();

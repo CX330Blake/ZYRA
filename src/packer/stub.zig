@@ -22,7 +22,7 @@ pub fn main() !void {
 }
 
 fn getEmbeddedPayload(allocator: std.mem.Allocator) ![]u8 {
-    var self_path_buffer: [std.fs.MAX_PATH_BYTES]u8 = undefined;
+    var self_path_buffer: [std.fs.max_path_bytes]u8 = undefined;
     const self_path = try std.fs.selfExePath(&self_path_buffer);
 
     const file = try std.fs.openFileAbsolute(self_path, .{});
